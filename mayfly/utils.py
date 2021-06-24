@@ -112,7 +112,7 @@ def LoadMeta(path):
     
 def ComputeSelf(name):
 
-    working_dir = '/home/az396/project/matchedfiltering'
+    working_dir = '/home/az396/project/mayfly'
     signal_path = 'data/signals'
     template_path = 'data/templates'
     
@@ -120,52 +120,60 @@ def ComputeSelf(name):
     template_metadata, sorted_templates = LoadMeta(os.path.join(working_dir, template_path, name))
     
     
+    #print(sorted_signals.shape, signal_metadata.shape)
+    #print(sorted_templates.shape, template_metadata.shape)
+    
     result = []
     
-    N_batch = 500
+    N_batch = 5
     batched_signals = np.array_split(sorted_signals, N_batch)
     batched_templates = np.array_split(sorted_templates, N_batch)
     batched_signal_metadata = np.array_split(signal_metadata, N_batch, axis=0)
     batched_template_metadata = np.array_split(template_metadata, N_batch, axis=0)
     
-    
+
     for i, signal_batch in enumerate(batched_signals):
+        loop_signals = []
+        
+        for signal in signal_batch:
+            with open(os.path.join(working_dir, signal_path, name, signal), 'rb') as infile:
+                loop_signals.append(pkl.load(infile)['x'])
+        noisy_signals = AddNoise(np.array(loop_signals), 10)
+        #print(noisy_signals.shape)
         for j, template_batch in enumerate(batched_templates):
-            if i >=j:
-                loop_signals = []
-                loop_templates = []
-                for signal in signal_batch:
-                    with open(os.path.join(working_dir, signal_path, name, signal), 'rb') as infile:
-                        loop_signals.append(pkl.load(infile)['x'])
-                for template in template_batch:
-                    with open(os.path.join(working_dir, template_path, name, template), 'rb') as infile:
-                        loop_templates.append(pkl.load(infile)['h'])
-                noisy_signals = AddNoise(np.array(loop_signals), 10)
-                print(i,j)
-                #print(noisy_signals.shape, np.array(loop_templates).conjugate().T.shape)
-                #print(np.matmul(noisy_signals, np.array(loop_templates).conjugate().T))
-                mf_scores = abs(np.matmul(noisy_signals, np.array(loop_templates).conjugate().T))
-                print(mf_scores)
-                print(batched_signal_metadata[i])
-                print(batched_template_metadata[j])
-                for n in range(len(batched_signal_metadata[i][:, 0])):
-                    for m in range(len(batched_template_metadata[j][:, 0])):
-                        #if n >= m
-                        result.append({'T':mf_scores[n, m], 
-                                        'x_r': batched_signal_metadata[i][n, 0],
-                                        'x_E': batched_signal_metadata[i][n, 1],
-                                        'x_pa': batched_signal_metadata[i][n, 2],
-                                        'x_z': batched_signal_metadata[i][n, 3],
-                                        'h_r': batched_template_metadata[j][m, 0],
-                                        'h_E': batched_template_metadata[j][m, 1],
-                                        'h_pa': batched_template_metadata[j][m, 2],
-                                        'h_z': batched_template_metadata[j][m, 3]
-                                        })
+            loop_templates = []
+            for template in template_batch:
+                with open(os.path.join(working_dir, template_path, name, template), 'rb') as infile:
+                    loop_templates.append(pkl.load(infile)['h'])
+            #print(np.array(loop_templates).shape)
+            
+            #print(i,j)
+            #print(noisy_signals.shape, np.array(loop_templates).conjugate().T.shape)
+            #print(np.matmul(noisy_signals, np.array(loop_templates).conjugate().T))
+            mf_scores = abs(np.matmul(noisy_signals, np.array(loop_templates).conjugate().T))
+            #print(mf_scores)
+            #print(batched_signal_metadata[i])
+            #print(batched_template_metadata[j])
+            count = 0
+            for n in range(len(batched_signal_metadata[i][:, 0])):
+                for m in range(len(batched_template_metadata[j][:, 0])):
+                    count += 1
+                    result.append({'T':mf_scores[n, m], 
+                                    'x_r': batched_signal_metadata[i][n, 0],
+                                    'x_E': batched_signal_metadata[i][n, 1],
+                                    'x_pa': batched_signal_metadata[i][n, 2],
+                                    'x_z': batched_signal_metadata[i][n, 3],
+                                    'h_r': batched_template_metadata[j][m, 0],
+                                    'h_E': batched_template_metadata[j][m, 1],
+                                    'h_pa': batched_template_metadata[j][m, 2],
+                                    'h_z': batched_template_metadata[j][m, 3]
+                                    })
+            #print(count,np.sqrt(count))
     return result
     
-def ComputeTemplateBank(signal_name, template_name):
+def ComputeTemplateBank(signal_name, template_name, N_batch = 5):
 
-    working_dir = '/home/az396/project/matchedfiltering'
+    working_dir = '/home/az396/project/mayfly'
     signal_path = 'data/signals'
     template_path = 'data/templates'
     
@@ -174,32 +182,37 @@ def ComputeTemplateBank(signal_name, template_name):
     
     result = []
     
-    N_batch = 20
     #batched_signals = np.array_split(sorted_signals, N_batch)
     batched_templates = np.array_split(sorted_templates, N_batch)
     #batched_signal_metadata = np.array_split(signal_metadata, N_batch, axis=0)
     batched_template_metadata = np.array_split(template_metadata, N_batch, axis=0)
     
+    signals = []
     for i, signal in enumerate(sorted_signals):
-        with open(os.path.join(working_dir, signal_path, signal_name, signal), 'rb') as infile:
-            loop_signal = pkl.load(infile)['x']
-            noisy_signal = AddNoise(np.array(loop_signal), 10)
-        for j, template_batch in enumerate(batched_templates):
-            loop_templates = []
-            for template in template_batch:
-                with open(os.path.join(working_dir, template_path, template_name, template), 'rb') as infile:
-                    loop_templates.append(pkl.load(infile)['h'])
-            noisy_signals = noisy_signal.reshape((1, noisy_signal.size)).repeat(len(loop_templates), axis=0)
-            print(i,j)
-            #print(noisy_signals.shape)
-            mf_scores = np.diagonal(abs(np.matmul(noisy_signals, np.array(loop_templates).conjugate().T)))
+            with open(os.path.join(working_dir, signal_path, signal_name, signal), 'rb') as infile:
+                loop_signal = pkl.load(infile)['x']
+                signals.append(loop_signal)
+                
+    noisy_signals = AddNoise(np.array(signals), 10)
+        
+    for j, template_batch in enumerate(batched_templates):
+        loop_templates = []
+        for template in template_batch:
+            with open(os.path.join(working_dir, template_path, template_name, template), 'rb') as infile:
+                loop_templates.append(pkl.load(infile)['h'])
+            #noisy_signals = noisy_signal.reshape((1, noisy_signal.size)).repeat(len(loop_templates), axis=0)
+        print(j)
+        #print(noisy_signals.shape)
+        mf_scores = abs(np.matmul(noisy_signals, np.array(loop_templates).conjugate().T))
+        
+        for n in range(noisy_signals.shape[0]):
             for m in range(len(batched_template_metadata[j][:, 0])):
                 #if n >= m
-                result.append({'T':mf_scores[m], 
-                                'x_r': signal_metadata[i, 0],
-                                'x_E': signal_metadata[i, 1],
-                                'x_pa': signal_metadata[i, 2],
-                                'x_z': signal_metadata[i, 3],
+                result.append({'T':mf_scores[n, m], 
+                                'x_r': signal_metadata[n, 0],
+                                'x_E': signal_metadata[n, 1],
+                                'x_pa': signal_metadata[n, 2],
+                                'x_z': signal_metadata[n, 3],
                                 'h_r': batched_template_metadata[j][m, 0],
                                 'h_E': batched_template_metadata[j][m, 1],
                                 'h_pa': batched_template_metadata[j][m, 2],
@@ -211,7 +224,7 @@ def AddNoise(data, T):
 
     size = data.size
     shape = data.shape
-    var = 1.38e-23 * 100e6 * 50 * T
+    var = 1.38e-23 * 200e6 * 50 * T
     
     noise = np.random.multivariate_normal([0, 0], np.eye(2) * var / 2, size)
     noise = noise[:, 0] + 1j * noise[:, 1]

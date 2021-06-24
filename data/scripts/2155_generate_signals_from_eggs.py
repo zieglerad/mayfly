@@ -2,10 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import pickle as pkl
-import matchfilter as mf
+import mayfly as mf
 
-path_to_eggs = '/home/az396/project/sims/sim_data/21520_variable_epaz'
-name = '21520_variable_epaz'
+path_to_eggs = '/home/az396/project/sims/sim_data/210610_epa_grid'
+name = '210610_epa_grid'
 v_range = 5.5e-8
 slice_num = 0
 N_start = 1500
@@ -45,7 +45,7 @@ for i in range(len(list_sim)):
         egg_time_series = egg_time_series.reshape(egg_time_series.size)
 
         data = {'pa': float(angle), 'rad': float(rad), 'E': float(energy), 'z': float(axial), 'x': np.array(egg_time_series)} 
-        with open(f'/home/az396/project/matchedfiltering/data/signals/{name}/{sim}.pkl', 'wb') as outfile:
+        with open(f'/home/az396/project/mayfly/data/signals/{name}/{sim}.pkl', 'wb') as outfile:
             pkl.dump(data, outfile)
         if i % 50 == 49:
             print('Done with %d' % i)

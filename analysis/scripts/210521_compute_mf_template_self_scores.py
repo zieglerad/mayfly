@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-import matchfilter as mf
+import mayfly as mf
 import pickle as pkl
 
 
-simulation_name = '21520_variable_epaz'
-results_path = '/home/az396/project/matchedfiltering/analysis/results'
-result_name = '210521_variable_epaz_self_scores.pkl'
+simulation_name = '210610_epa_grid'
+results_path = '/home/az396/project/mayfly/analysis/results'
+result_name = '210610_epa_grid_self_scores.pkl'
 
 result = mf.utils.ComputeSelf(simulation_name)
 

@@ -4,13 +4,13 @@ import pickle as pkl
 #import torch
 import os
 
-raw_data_path = '/home/az396/project/matchedfiltering/data/signals/21520_variable_epaz'
+raw_data_path = '/home/az396/project/mayfly/data/signals/210610_epa_grid'
 
-save_data_path = '/home/az396/project/matchedfiltering/data/templates/21520_variable_epaz'
+save_data_path = '/home/az396/project/mayfly/data/templates/210610_epa_grid'
 
 N_samp = 8192
 
-noise_var = 1.38e-23 * 100e6 * 50 * 10
+noise_var = 1.38e-23 * 200e6 * 50 * 10
 
 def Signal2Template(file_path, save_data_path, noise_cov_mat, diagonal_cov_mat = True):
 
